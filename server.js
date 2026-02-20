@@ -17,6 +17,22 @@ const app = express();
 // Connect to database
 connectDB();
 
+
+const cors = require('cors');
+
+app.use(cors({
+  origin: [
+    'https://getinlin.web.app',
+    'https://getinlin.firebaseapp.com'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// IMPORTANT: handle preflight
+app.options('*', cors());
+
 // Middleware
 app.use(express.json());
 
