@@ -128,11 +128,100 @@ const professionalValidation = {
   ],
 };
 
+const appointmentValidation = {
+  create: [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('age').isInt({ min: 0, max: 150 }).withMessage('Valid age required'),
+    body('mobileNo').matches(/^\d{10}$/).withMessage('10-digit mobile required'),
+    body('address').notEmpty().withMessage('Address required'),
+    body('organizationId').notEmpty().withMessage('Organization ID required'),
+    body('professionalId').notEmpty().withMessage('Professional ID required'),
+    body('appointmentDate').isISO8601().toDate().withMessage('Valid date required'),
+    body('appointmentExpectedTime').notEmpty().withMessage('Expected time required'),
+    body('status').optional().isIn(['pending', 'accepted', 'cancelled', 'InLine']),
+  ],
+  update: [
+    param('appointmentId').notEmpty(),
+    body('status').optional().isIn(['pending', 'accepted', 'cancelled', 'InLine']),
+    body('appointmentExpectedTime').optional(),
+    body('name').optional(),
+    body('mobileNo').optional().matches(/^\d{10}$/),
+  ],
+  appointmentIdParam: [
+    param('appointmentId').notEmpty(),
+  ],
+  professionalIdParam: [
+    param('professionalId').notEmpty(),
+  ],
+  organizationIdParam: [
+    param('organizationId').notEmpty(),
+  ],
+  dateQuery: [
+    query('date').optional().isISO8601().toDate(),
+    query('status').optional().isString(),
+  ],
+  limitCheck: [
+    query('date').isISO8601().toDate(),
+    query('userId').optional(), // for admin checking others? not needed now
+  ],
+};
+
+const leaveValidation = {
+  create: [
+    body('professionalId').notEmpty(),
+    body('startDate').isISO8601().toDate(),
+    body('endDate').isISO8601().toDate().custom((end, { req }) => {
+      if (end < req.body.startDate) throw new Error('End date must be after start date');
+      return true;
+    }),
+    body('reason').optional().isString(),
+  ],
+  update: [
+    param('leaveId').notEmpty(),
+    body('startDate').optional().isISO8601().toDate(),
+    body('endDate').optional().isISO8601().toDate(),
+    body('reason').optional().isString(),
+  ],
+  leaveIdParam: [param('leaveId').notEmpty()],
+  professionalIdParam: [param('professionalId').notEmpty()],
+};
+
+const notificationValidation = {
+  userIdParam: [param('userId').notEmpty()],
+  notificationIdParam: [param('notificationId').notEmpty()],
+};
+
+const notifyValidation = {
+  create: [
+    body('professionalId').notEmpty(),
+    body('organizationId').notEmpty(),
+  ],
+  notifyIdParam: [param('notifyId').notEmpty()],
+  professionalIdParam: [param('professionalId').notEmpty()],
+};
+
+const transactionValidation = {
+  create: [
+    body('appointmentId').notEmpty(),
+    body('amountPaid').isNumeric().withMessage('Amount must be a number'),
+    body('paymentMode').isIn(['cash', 'online', 'phonepe', 'card', 'other']),
+    body('paymentDate').optional().isISO8601().toDate(),
+    body('remarks').optional().isString(),
+  ],
+  appointmentIdParam: [param('appointmentId').notEmpty()],
+  organizationIdParam: [param('organizationId').notEmpty()],
+};
+
 module.exports = {
   user: userValidation,
   organization: organizationValidation,
   joinRequest: joinRequestValidation,
   professional: professionalValidation,
+  appointment: appointmentValidation,
+  leave: leaveValidation,
+  notification: notificationValidation,
+  notify: notifyValidation,
+  transaction: transactionValidation,
 };
 
 // module.exports = {

@@ -3,14 +3,19 @@ const router = express.Router();
 const multer = require('multer');
 const organizationController = require('../controllers/organizationController');
 const authMiddleware = require('../middleware/auth');
-const organizationValidation  = require('../utils/validation');
+const {organization}  = require('../utils/validation');
 
 // Configure multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Public routes
-router.get('/search', organizationValidation.search, organizationController.searchOrganizations);
-router.get('/qr/:qrId', organizationValidation.qrIdParam, organizationController.getOrganizationByQr);
+router.get('/search', organization.search, organizationController.searchOrganizations);
+router.get('/qr/:qrId', organization.qrIdParam, organizationController.getOrganizationByQr);
+
+router.delete('/:organizationId/users/:userId', authMiddleware, organizationController.removeUserFromOrganization);
+
+router.get('/:organizationId/users', authMiddleware, organizationController.getOrganizationUsers);
+
 
 // Protected routes
 router.use(authMiddleware);
@@ -19,18 +24,18 @@ router.use(authMiddleware);
 router.post(
   '/create',
   upload.single('picUrl'), // field name must match frontend
-  organizationValidation.create,
+  organization.create,
   organizationController.createOrganization
 );
 
 // Get organization by ID
-router.get('/:organizationId', organizationValidation.organizationIdParam, organizationController.getOrganizationById);
+router.get('/:organizationId', organization.organizationIdParam, organizationController.getOrganizationById);
 
 // Update organization with optional picture upload
 router.patch(
   '/:organizationId',
   upload.single('picUrl'),
-  organizationValidation.update,
+  organization.update,
   organizationController.updateOrganization
 );
 

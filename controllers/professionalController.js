@@ -1,6 +1,7 @@
 const Professional = require('../models/Professional');
 const ProfessionalStatusHistory = require('../models/ProfessionalStatusHistory');
 const Organization = require('../models/Organization');
+const { sendNotificationToTopic } = require('../services/notificationService');
 const { validationResult } = require('express-validator');
 const { AppError } = require('../utils/errorHandler');
 const { v4: uuidv4 } = require('uuid');
@@ -35,10 +36,10 @@ const createProfessional = async (req, res, next) => {
 
     const uid = req.user.uid;
 
-    // Verify user has access to this organization (admin/manager)
-    if (req.dbUser?.organizationId !== organizationId || !['admin', 'manager'].includes(req.dbUser?.role)) {
-      throw new AppError('You do not have permission to create professionals in this organization', 403);
-    }
+    // // Verify user has access to this organization (admin/manager)
+    // if (req.dbUser?.organizationId !== organizationId || !['admin', 'manager'].includes(req.dbUser?.role)) {
+    //   throw new AppError('You do not have permission to create professionals in this organization', 403);
+    // }
 
     // Check organization exists
     const org = await Organization.findOne({ organizationId });
@@ -222,7 +223,24 @@ const updateProfessionalStatus = async (req, res, next) => {
       changedBy: uid,
     });
     await history.save();
-
+// firebase notification
+// Notify users who have subscribed to this professional's availability
+// (assuming they subscribe to a topic named "prof_<professionalId>")
+await sendNotificationToTopic(
+  `prof_${professionalId}`,
+  {
+    title: `Dr. ${professional.name} is now ${status}`,
+    body: status === 'IN' 
+      ? 'The professional is now available for appointments.'
+      : 'The professional is currently unavailable.',
+  },
+  {
+    type: 'professional_status',
+    professionalId: professionalId,
+    status: status,
+  }
+);
+// firebase notification
     res.status(200).json({
       success: true,
       professional,

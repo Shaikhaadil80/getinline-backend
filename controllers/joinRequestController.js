@@ -4,6 +4,7 @@ const Organization = require('../models/Organization');
 const { validationResult } = require('express-validator');
 const { AppError } = require('../utils/errorHandler');
 const { v4: uuidv4 } = require('uuid');
+const { sendNotificationToOrgRoles, sendNotificationToUser } = require('../services/notificationService');
 
 const handleValidationErrors = (req) => {
   const errors = validationResult(req);
@@ -61,7 +62,21 @@ const createJoinRequest = async (req, res, next) => {
     await newRequest.save();
 
     // TODO: Send FCM notification to organization admins
-
+// Notify organization admins and managers
+await sendNotificationToOrgRoles(
+  organizationId,
+  ['admin', 'manager'],
+  {
+    title: 'New Join Request',
+    body: `A user wants to join your organization.`,
+  },
+  {
+    type: 'join_request',
+    requestId: newRequest.requestId,
+    organizationId: organizationId,
+  }
+);
+// Notify user
     res.status(201).json({
       success: true,
       joinRequest: newRequest,
@@ -147,8 +162,22 @@ const acceptJoinRequest = async (req, res, next) => {
       }
     );
 
+// inside acceptJoinRequest, before sending:
+const organization = await Organization.findOne({ organizationId: request.organizationId });
     // TODO: Send FCM notification to user
-
+// Notify the user that their request was accepted
+await sendNotificationToUser(
+  request.userId,
+  {
+    title: 'Join Request Accepted',
+    body: `Your request to join ${organization.organizationName} has been accepted. You are now a ${role}.`,
+  },
+  {
+    type: 'join_request_accepted',
+    organizationId: request.organizationId,
+    organizationName: organization.organizationName, // you may need to fetch org name
+  }
+);
     res.status(200).json({
       success: true,
       joinRequest: request,
@@ -187,7 +216,19 @@ const rejectJoinRequest = async (req, res, next) => {
     await request.save();
 
     // TODO: Send FCM notification to user
-
+// Notify the user that their request was rejected
+await sendNotificationToUser(
+  request.userId,
+  {
+    title: 'Join Request Rejected',
+    body: `Your request to join the organization has been rejected.`,
+  },
+  {
+    type: 'join_request_rejected',
+    organizationId: request.organizationId,
+  }
+);
+// notify user
     res.status(200).json({
       success: true,
       joinRequest: request,

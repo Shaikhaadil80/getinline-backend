@@ -5,6 +5,11 @@ const userRoutes = require('./routes/userRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
 const joinRequestRoutes = require('./routes/joinRequestRoutes');
 const professionalRoutes = require('./routes/professionalRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const leaveRoutes = require('./routes/leaveRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const notifyRoutes = require('./routes/notifyRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
 const { errorHandler } = require('./utils/errorHandler');
 
 const app = express();
@@ -20,6 +25,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/organizations', organizationRoutes);
 app.use('/api/join-requests', joinRequestRoutes);
 app.use('/api/professionals', professionalRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/leaves', leaveRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/notify', notifyRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 

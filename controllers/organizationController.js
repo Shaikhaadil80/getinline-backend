@@ -236,10 +236,56 @@ const getOrganizationByQr = async (req, res, next) => {
   }
 };
 
+const getOrganizationUsers = async (req, res, next) => {
+  try {
+    const { organizationId } = req.params;
+    const { role, status, limit = 50, skip = 0 } = req.query;
+
+    if (req.dbUser?.organizationId !== organizationId && req.dbUser?.role !== 'admin') {
+      throw new AppError('Access denied', 403);
+    }
+
+    const filter = { organizationId };
+    if (role) filter.role = role;
+    if (status) filter.status = status;
+
+    const users = await User.find(filter)
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .sort({ name: 1 });
+
+    const total = await User.countDocuments(filter);
+
+    res.json({ success: true, users, pagination: { total, limit, skip } });
+  } catch (error) { next(error); }
+};
+
+const removeUserFromOrganization = async (req, res, next) => {
+  try {
+    const { organizationId, userId } = req.params;
+
+    if (req.dbUser?.organizationId !== organizationId || req.dbUser?.role !== 'admin') {
+      throw new AppError('Only organization admin can remove users', 403);
+    }
+
+    const user = await User.findOne({ uid: userId, organizationId });
+    if (!user) throw new AppError('User not found in this organization', 404);
+
+    user.organizationId = null;
+    user.role = 'customer';
+    user.updatedBy = req.user.uid;
+    await user.save();
+
+    res.json({ success: true, message: 'User removed from organization' });
+  } catch (error) { next(error); }
+};
+
 module.exports = {
   createOrganization,
   getOrganizationById,
   updateOrganization,
   searchOrganizations,
   getOrganizationByQr,
+  getOrganizationUsers,
+  removeUserFromOrganization,
 };

@@ -235,6 +235,25 @@ const getAllUsers = async (req, res, next) => {
   }
 };
 
+const updateUserRoleByUid = async (req, res, next) => {
+  try {
+    handleValidationErrors(req);
+    const { uid } = req.params;
+    const { role } = req.body;
+
+    if (req.dbUser?.role !== 'admin') throw new AppError('Only admins can change roles', 403);
+
+    const user = await User.findOneAndUpdate(
+      { uid },
+      { $set: { role, updatedBy: req.user.uid } },
+      { new: true, runValidators: true }
+    );
+    if (!user) throw new AppError('User not found', 404);
+
+    res.json({ success: true, data: user });
+  } catch (error) { next(error); }
+};
+
 module.exports = {
   createUser,
   getUserByUid,
@@ -243,4 +262,5 @@ module.exports = {
   updateUserRole,
   updateUserStatus,
   getAllUsers,
+  updateUserRoleByUid,
 };
