@@ -19,21 +19,27 @@ connectDB();
 
 
 const cors = require('cors');
+//// for production development
 
-app.use(cors({
-  origin: [
-    'https://getinlin.web.app',
-    'https://getinlin.firebaseapp.com'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+// app.use(cors({
+//   origin: [
+//     'https://getinlin.web.app',
+//     'https://getinlin.firebaseapp.com'
+//   ],
+//   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true
+// }));
 
-// IMPORTANT: handle preflight
-app.options('*', cors());
+// // IMPORTANT: handle preflight
+// app.options('*', cors());
+//// for production development
 
 // Middleware
+//// for localhost development
+app.use(cors());
+//// for localhost development
+
 app.use(express.json());
 
 // Routes
@@ -46,6 +52,7 @@ app.use('/api/leaves', leaveRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/notify', notifyRoutes);
 app.use('/api/transactions', transactionRoutes);
+
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 

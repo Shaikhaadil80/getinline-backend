@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const { AppError } = require('../utils/errorHandler');
+const { sendNotificationToUser } = require('../services/notificationService');
 
 // Helper to handle validation errors
 const handleValidationErrors = (req) => {
@@ -128,6 +129,17 @@ const updateFcmToken = async (req, res, next) => {
     if (!user) {
       throw new AppError('User not found', 404);
     }
+    // Send a test notification to the user after updating FCM token
+    await sendNotificationToUser(
+      uid,
+      {
+        title: 'Test Notification',
+        body: 'Your FCM token was updated successfully.',
+      },
+      {
+        type: 'test_notification',
+      }
+    );
 
     res.status(200).json({
       success: true,
